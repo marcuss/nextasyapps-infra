@@ -57,3 +57,67 @@ resource "aws_s3_bucket_cors_configuration" "this" {
     max_age_seconds = 3000
   }
 }
+
+resource "aws_cloudfront_distribution" "this" {
+  enabled             = true
+  default_root_object = "index.html"
+  price_class         = "PriceClass_100"
+
+  comment = "${var.bucket_name} SPA (${var.environment})"
+
+  origin {
+    domain_name = aws_s3_bucket_website_configuration.this.website_endpoint
+    origin_id   = "S3-Website-${var.bucket_name}"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  default_cache_behavior {
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-Website-${var.bucket_name}"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    forwarded_values {
+      query_string = true
+      cookies {
+        forward = "none"
+      }
+    }
+  }
+
+  custom_error_response {
+    error_code            = 403
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
+  }
+
+  custom_error_response {
+    error_code            = 404
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  tags = merge(var.tags, {
+    ManagedBy   = "terraform"
+    Environment = var.environment
+  })
+}
