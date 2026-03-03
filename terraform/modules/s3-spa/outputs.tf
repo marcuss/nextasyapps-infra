@@ -10,10 +10,6 @@ output "website_endpoint" {
   value = aws_s3_bucket_website_configuration.this.website_endpoint
 }
 
-output "cloudfront_domain" {
-  value = aws_cloudfront_distribution.this.domain_name
-}
-
-output "cloudfront_url" {
-  value = "https://${aws_cloudfront_distribution.this.domain_name}"
+output "website_url" {
+  value = "http://${aws_s3_bucket_website_configuration.this.website_endpoint}"
 }
