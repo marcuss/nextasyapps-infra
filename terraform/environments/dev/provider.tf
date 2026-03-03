@@ -10,11 +10,9 @@ terraform {
     bucket  = "nextasyapps-terraform-state-dev"
     key     = "couplesapp/frontend/terraform.tfstate"
     region  = "us-east-1"
-    profile = "dev"
   }
 }
 
 provider "aws" {
-  region  = "us-east-1"
-  profile = "dev"
+  region = "us-east-1"
 }
