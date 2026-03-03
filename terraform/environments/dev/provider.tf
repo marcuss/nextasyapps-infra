@@ -7,9 +7,9 @@ terraform {
   }
 
   backend "s3" {
-    bucket  = "nextasyapps-terraform-state-dev"
-    key     = "couplesapp/frontend/terraform.tfstate"
-    region  = "us-east-1"
+    bucket = "nextasyapps-terraform-state-dev"
+    key    = "couplesapp/frontend/terraform.tfstate"
+    region = "us-east-1"
   }
 }
 

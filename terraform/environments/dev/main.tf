@@ -5,7 +5,7 @@ module "couplesapp_frontend" {
   environment = "dev"
 
   tags = {
-    App     = "couplesapp"
-    Team    = "nextasy"
+    App  = "couplesapp"
+    Team = "nextasy"
   }
 }
