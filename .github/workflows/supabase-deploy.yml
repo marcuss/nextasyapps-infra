@@ -27,14 +27,16 @@ jobs:
       - name: Apply migrations (dev)
         if: github.event.inputs.environment == 'dev' || github.ref == 'refs/heads/main'
         run: |
-          supabase db push --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
+          supabase link --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
+          supabase db push
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Apply migrations (prod)
         if: github.event.inputs.environment == 'prod'
         run: |
-          supabase db push --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
+          supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
+          supabase db push
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -50,12 +52,11 @@ jobs:
       - name: Deploy Edge Functions (dev)
         if: github.event.inputs.environment == 'dev' || github.ref == 'refs/heads/main'
         run: |
+          supabase link --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
           for fn_dir in supabase/functions/*/; do
             fn_name=$(basename "$fn_dir")
             echo "Deploying function: $fn_name"
-            supabase functions deploy "$fn_name" \
-              --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }} \
-              --no-verify-jwt
+            supabase functions deploy "$fn_name" --no-verify-jwt
           done
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -63,12 +64,11 @@ jobs:
       - name: Deploy Edge Functions (prod)
         if: github.event.inputs.environment == 'prod'
         run: |
+          supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
           for fn_dir in supabase/functions/*/; do
             fn_name=$(basename "$fn_dir")
             echo "Deploying function: $fn_name"
-            supabase functions deploy "$fn_name" \
-              --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }} \
-              --no-verify-jwt
+            supabase functions deploy "$fn_name" --no-verify-jwt
           done
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
