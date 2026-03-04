@@ -17,3 +17,23 @@ output "couplesapp_cloudfront_domain" {
 output "couplesapp_cloudfront_distribution_id" {
   value = module.couplesapp_frontend.cloudfront_distribution_id
 }
+
+output "nextasy_website_url" {
+  value = module.nextasy_website.website_url
+}
+
+output "nextasy_website_bucket_name" {
+  value = module.nextasy_website.bucket_name
+}
+
+output "nextasy_cloudfront_url" {
+  value = module.nextasy_website.cloudfront_url
+}
+
+output "nextasy_cloudfront_domain" {
+  value = module.nextasy_website.cloudfront_domain_name
+}
+
+output "nextasy_cloudfront_distribution_id" {
+  value = module.nextasy_website.cloudfront_distribution_id
+}
