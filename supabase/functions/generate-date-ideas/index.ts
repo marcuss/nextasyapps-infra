@@ -45,7 +45,7 @@ const DateIdeaSchema = z.object({
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
-serve(async () => {
+serve(async (req) => {
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -54,21 +54,37 @@ serve(async () => {
 
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-  // 1. Distinct active cities
-  const { data: cityRows, error: cityError } = await supabase
-    .from('profiles')
-    .select('city')
-    .not('city', 'is', null)
-    .neq('city', '');
+  // Support optional `cities` override in request body (for manual/test invocations)
+  let overrideCities: string[] | null = null;
+  try {
+    const body = await req.json().catch(() => ({}));
+    if (Array.isArray(body?.cities) && body.cities.length > 0) {
+      overrideCities = body.cities as string[];
+    }
+  } catch { /* ignore */ }
 
-  if (cityError) {
-    console.error('Failed to fetch cities:', cityError.message);
-    return new Response(JSON.stringify({ error: cityError.message }), { status: 500 });
+  let distinctCities: string[];
+
+  if (overrideCities) {
+    distinctCities = overrideCities;
+    console.log(`[generate-date-ideas] Manual override: ${distinctCities.join(', ')}`);
+  } else {
+    // 1. Distinct active cities from profiles
+    const { data: cityRows, error: cityError } = await supabase
+      .from('profiles')
+      .select('city')
+      .not('city', 'is', null)
+      .neq('city', '');
+
+    if (cityError) {
+      console.error('Failed to fetch cities:', cityError.message);
+      return new Response(JSON.stringify({ error: cityError.message }), { status: 500 });
+    }
+
+    distinctCities = [
+      ...new Set((cityRows ?? []).map((r) => r.city).filter(Boolean) as string[]),
+    ];
   }
-
-  const distinctCities = [
-    ...new Set((cityRows ?? []).map((r) => r.city).filter(Boolean) as string[]),
-  ];
 
   console.log(
     `[generate-date-ideas] ${today} — ${distinctCities.length} cities: ${distinctCities.join(', ')}`
