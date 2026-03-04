@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS date_ideas (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   city TEXT NOT NULL,
   date DATE NOT NULL DEFAULT CURRENT_DATE,
-  ideas JSONB NOT NULL, -- array de ideas estructuradas
+  ideas JSONB NOT NULL,
   generated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(city, date)
 );
@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS date_ideas_feedback (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   city TEXT NOT NULL,
   date DATE NOT NULL DEFAULT CURRENT_DATE,
-  feedback_text TEXT,          -- "prefiero cosas al aire libre" etc.
-  personalized_ideas JSONB,    -- ideas personalizadas generadas tras el feedback
+  feedback_text TEXT,
+  personalized_ideas JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -29,10 +29,12 @@ ALTER TABLE date_ideas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE date_ideas_feedback ENABLE ROW LEVEL SECURITY;
 
 -- date_ideas: cualquier usuario autenticado puede leer
+DROP POLICY IF EXISTS "authenticated users can read date_ideas" ON date_ideas;
 CREATE POLICY "authenticated users can read date_ideas"
   ON date_ideas FOR SELECT TO authenticated USING (true);
 
 -- date_ideas_feedback: cada usuario solo ve/crea el suyo
+DROP POLICY IF EXISTS "users manage own feedback" ON date_ideas_feedback;
 CREATE POLICY "users manage own feedback"
   ON date_ideas_feedback FOR ALL TO authenticated
   USING (auth.uid() = user_id)
