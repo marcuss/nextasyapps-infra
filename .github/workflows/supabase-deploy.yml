@@ -1,0 +1,39 @@
+name: Supabase Deploy Migrations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/functions/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        type: choice
+        options: [dev, prod]
+
+jobs:
+  deploy-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Apply migrations (dev)
+        if: github.event.inputs.environment == 'dev' || github.ref == 'refs/heads/main'
+        run: |
+          supabase db push --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Apply migrations (prod)
+        if: github.event.inputs.environment == 'prod'
+        run: |
+          supabase db push --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
