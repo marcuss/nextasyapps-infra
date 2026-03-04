@@ -27,18 +27,10 @@ output "dev_api_url" {
   value = module.supabase_dev.api_url
 }
 
-output "dev_anon_key" {
-  value = module.supabase_dev.anon_key
-}
-
 output "prod_project_ref" {
   value = module.supabase_prod.project_ref
 }
 
 output "prod_api_url" {
   value = module.supabase_prod.api_url
-}
-
-output "prod_anon_key" {
-  value = module.supabase_prod.anon_key
 }
