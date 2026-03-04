@@ -13,3 +13,11 @@ resource "supabase_project" "this" {
   database_password = var.database_password
   region            = var.region
 }
+
+resource "supabase_settings" "auth" {
+  project_ref = supabase_project.this.id
+
+  auth = jsonencode({
+    disable_signup = var.disable_signup
+  })
+}
