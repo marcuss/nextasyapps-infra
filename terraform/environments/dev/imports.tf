@@ -1,5 +1,32 @@
 # Import existing AWS resources created before Terraform management
 
+# CouplesApp CloudFront distribution (ID: ERLTLXEW7WTTN)
+import {
+  to = module.couplesapp_frontend.aws_cloudfront_distribution.this
+  id = "ERLTLXEW7WTTN"
+}
+
+# CouplesApp S3 bucket (couplesapp-dev-frontend)
+import {
+  to = module.couplesapp_frontend.aws_s3_bucket.this
+  id = "couplesapp-dev-frontend"
+}
+
+import {
+  to = module.couplesapp_frontend.aws_s3_bucket_public_access_block.this
+  id = "couplesapp-dev-frontend"
+}
+
+import {
+  to = module.couplesapp_frontend.aws_s3_bucket_website_configuration.this
+  id = "couplesapp-dev-frontend"
+}
+
+import {
+  to = module.couplesapp_frontend.aws_s3_bucket_policy.this
+  id = "couplesapp-dev-frontend"
+}
+
 # nextasy-co-website S3 bucket (created manually before Terraform)
 import {
   to = module.nextasy_website.aws_s3_bucket.this
