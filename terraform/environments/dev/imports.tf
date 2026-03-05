@@ -1,7 +1,6 @@
 # Import existing AWS resources created before Terraform management
-# These resources existed manually and need to be brought under Terraform state.
 
-# nextasy-co-website S3 bucket (created manually via AWS console/CLI)
+# nextasy-co-website S3 bucket (created manually before Terraform)
 import {
   to = module.nextasy_website.aws_s3_bucket.this
   id = "nextasy-co-website"
@@ -22,10 +21,7 @@ import {
   id = "nextasy-co-website"
 }
 
-import {
-  to = module.nextasy_website.aws_s3_bucket_cors_configuration.this
-  id = "nextasy-co-website"
-}
+# Note: CORS was not configured on the existing bucket — Terraform will create it
 
 # nextasy-co-website CloudFront distribution (ID: E640UP3DK37WP)
 import {
