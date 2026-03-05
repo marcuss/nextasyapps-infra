@@ -19,3 +19,9 @@ variable "region" {
   type        = string
   default     = "us-east-1"
 }
+
+variable "disable_signup" {
+  description = "Disable new user signups (set false to allow registration)"
+  type        = bool
+  default     = false
+}
