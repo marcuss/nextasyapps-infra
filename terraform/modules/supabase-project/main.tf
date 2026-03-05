@@ -19,5 +19,6 @@ resource "supabase_settings" "auth" {
 
   auth = jsonencode({
     disable_signup = var.disable_signup
+    mailer_autoconfirm = var.mailer_autoconfirm
   })
 }
