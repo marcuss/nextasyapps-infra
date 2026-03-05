@@ -112,7 +112,7 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
-  aliases = var.custom_domain != "" ? [var.custom_domain] : []
+  aliases = var.custom_domain != "" ? concat([var.custom_domain], var.additional_domains) : []
 
   viewer_certificate {
     cloudfront_default_certificate = var.custom_domain == "" ? true : null
