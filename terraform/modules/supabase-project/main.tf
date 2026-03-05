@@ -2,7 +2,7 @@ terraform {
   required_providers {
     supabase = {
       source  = "supabase/supabase"
-      version = "~> 1.0"
+      version = "~> 1.4"
     }
   }
 }
