@@ -2,115 +2,252 @@
 
 Infrastructure as Code for **Nextasy** — managed with Terraform, Supabase CLI, and GitHub Actions.
 
-> ⚡ The architecture diagram below is **automatically updated** on every infrastructure change via GitHub Actions.
+> ⚡ The architecture diagrams below are **automatically updated** on every infrastructure change via GitHub Actions.
 
 ---
 
-## Architecture
+## 🗺️ Architecture Overview
+
+Five focused diagrams — each styled to its brand — give you a complete picture of the infrastructure at every level of detail.
+
+---
+
+### Diagram 1 — 10,000-foot View
+
+High-level view of how all the moving parts relate to each other.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#f8f9fa', 'primaryTextColor': '#1a1a1a', 'primaryBorderColor': '#dee2e6', 'lineColor': '#6c757d', 'secondaryColor': '#ffffff', 'tertiaryColor': '#f0f0f0', 'background': '#ffffff', 'edgeLabelBackground': '#ffffff', 'fontFamily': 'ui-monospace, monospace'}}}%%
 graph TB
-    %% ── DNS ───────────────────────────────────────────
-    subgraph DNS["🌐 DNS — Route 53 (nextasy.co)"]
-        R53["Hosted Zone\nZ02633611RLKX976F44TP"]
-        R53 -->|"A alias\ncouplesapp.nextasy.co"| CF_APP
-        R53 -->|"CNAME *.nextasy.co"| CF_WEB
+    subgraph APPS["📱 Applications"]
+        APP_WEB["💗 CouplesApp Web\ncouplesapp.nextasy.co"]
+        APP_IOS["📱 CouplesApp iOS\nCapacitor native"]
+        APP_SITE["🌐 nextasy.co\nCorporate site"]
     end
 
-    %% ── CDN ───────────────────────────────────────────
-    subgraph CDN["☁️ CloudFront (AWS Dev — AWS_ACCOUNT_ID_REDACTED)"]
-        CF_APP["CouplesApp CDN\nERLTLXEW7WTTN\ndlr56cmovhfn0.cloudfront.net\nSSL: ACM *.nextasy.co"]
-        CF_WEB["Nextasy Web CDN\nE640UP3DK37WP\nd3heh2lnt32ajw.cloudfront.net"]
-        CF_REPORTS["Reports CDN\nEYJ1QFLZNTBP\nd1ej7mofi8sf.cloudfront.net\nSSL: CloudFront default"]
+    subgraph GH["🐙 GitHub"]
+        GH_CODE["Source Code\n& Workflows"]
     end
 
-    %% ── S3 ────────────────────────────────────────────
-    subgraph S3["🪣 S3 Buckets"]
-        S3_APP["couplesapp-dev-frontend\nReact SPA — CouplesApp"]
-        S3_WEB["nextasy-co-website\nNextasy corporate site\n+ branch previews"]
-        S3_E2E["couplesapp-e2e-reports\nE2E nightly reports\n+ ClawBot reports"]
+    subgraph AWS["☁️ AWS"]
+        AWS_INFRA["S3 · CloudFront\nRoute53 · SES · ACM"]
     end
 
+    subgraph SB["🟢 Supabase"]
+        SB_INFRA["Postgres · Auth\nEdge Functions · Crons"]
+    end
+
+    GH_CODE -->|"CI/CD deploys"| AWS_INFRA
+    GH_CODE -->|"CI/CD deploys"| SB_INFRA
+    APP_WEB --> AWS_INFRA
+    APP_WEB --> SB_INFRA
+    APP_IOS --> SB_INFRA
+    APP_SITE --> AWS_INFRA
+
+    classDef app fill:#f43f5e,stroke:#be123c,stroke-width:2px,color:#ffffff
+    classDef github fill:#24292E,stroke:#0366D6,stroke-width:2px,color:#ffffff
+    classDef awsStyle fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:#232F3E,font-weight:bold
+    classDef supabase fill:#3ECF8E,stroke:#1a7a52,stroke-width:2px,color:#0d3d27,font-weight:bold
+
+    class APP_WEB,APP_IOS,APP_SITE app
+    class GH_CODE github
+    class AWS_INFRA awsStyle
+    class SB_INFRA supabase
+```
+
+---
+
+### Diagram 2 — GitHub Repos & CI/CD
+
+Source code repositories, workflows, and the automation that keeps everything running.
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#24292E', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#444d56', 'lineColor': '#586069', 'secondaryColor': '#1f2428', 'tertiaryColor': '#2f363d', 'background': '#24292E', 'edgeLabelBackground': '#24292E', 'clusterBkg': '#1f2428', 'clusterBorder': '#444d56', 'fontFamily': 'ui-monospace, monospace', 'titleColor': '#ffffff'}}}%%
+graph LR
+    subgraph REPOS["🐙 GitHub Repositories"]
+        R_INFRA["🏗️ nextasyapps-infra\nTerraform · Supabase · GHA"]
+        R_WEB["💗 couplesapp\nReact · Capacitor"]
+        R_SITE["🌐 nextasy-web\nMarketing site"]
+    end
+
+    subgraph SECRETS["🔐 Repository Secrets"]
+        SEC1["AWS_ACCESS_KEY_ID\nAWS_SECRET_ACCESS_KEY"]
+        SEC2["SUPABASE_ACCESS_TOKEN\nSUPABASE_*_PROJECT_REF"]
+        SEC3["TF_VAR_SUPABASE_*\nANTHROPIC_API_KEY"]
+    end
+
+    subgraph WORKFLOWS["⚙️ GitHub Actions Workflows"]
+        WF_TF["🟠 terraform-dev.yml\nterraform plan + apply\n→ AWS infra changes"]
+        WF_SB["🟢 supabase-deploy.yml\ndb push + fn deploy\n→ DB migrations & Edge Fns"]
+        WF_DIAG["📄 update-diagram.yml\nauto-update README\n→ creates PR on change"]
+    end
+
+    subgraph TARGETS["🚀 Deployment Targets"]
+        T_AWS["☁️ AWS\n(S3 · CF · R53 · SES)"]
+        T_SB["🟢 Supabase\n(dev + prod)"]
+        T_README["📄 README.md\n(this file)"]
+    end
+
+    R_INFRA --> WF_TF
+    R_INFRA --> WF_SB
+    R_INFRA --> WF_DIAG
+    SECRETS --> WF_TF
+    SECRETS --> WF_SB
+    SECRETS --> WF_DIAG
+    WF_TF -->|manages| T_AWS
+    WF_SB -->|deploys| T_SB
+    WF_DIAG -->|creates PR| T_README
+
+    classDef repo fill:#0366D6,stroke:#044289,stroke-width:2px,color:#ffffff
+    classDef secret fill:#6f42c1,stroke:#5a32a3,stroke-width:2px,color:#ffffff
+    classDef workflow fill:#28A745,stroke:#1e7e34,stroke-width:2px,color:#ffffff
+    classDef target fill:#444d56,stroke:#24292E,stroke-width:2px,color:#e1e4e8
+
+    class R_INFRA,R_WEB,R_SITE repo
+    class SEC1,SEC2,SEC3 secret
+    class WF_TF,WF_SB,WF_DIAG workflow
+    class T_AWS,T_SB,T_README target
+```
+
+---
+
+### Diagram 3 — Supabase Detail
+
+Database schema, Edge Functions, scheduled crons, and auth configuration for dev & prod.
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1C1C1C', 'primaryTextColor': '#3ECF8E', 'primaryBorderColor': '#3ECF8E', 'lineColor': '#3ECF8E', 'secondaryColor': '#161616', 'tertiaryColor': '#1a1a1a', 'background': '#1C1C1C', 'edgeLabelBackground': '#1C1C1C', 'clusterBkg': '#161616', 'clusterBorder': '#2a2a2a', 'fontFamily': 'ui-monospace, monospace', 'titleColor': '#3ECF8E'}}}%%
+graph TB
+    subgraph AUTH["🔐 Auth Configuration"]
+        DEV_AUTH["couplesapp-dev\nklpshxvjzsdqolkrabvb\nsignup=ON · autoconfirm=ON"]
+        PROD_AUTH["couplesapp-prod\nzbzesuuovfpjdqggambg\nsignup=OFF · autoconfirm=OFF"]
+    end
+
+    subgraph SCHEMA["🗃️ Database Schema (PostgreSQL)"]
+        T1[("🗃️ profiles")]
+        T2[("🗃️ couples")]
+        T3[("🗃️ invitations")]
+        T4[("🗃️ calendar_events")]
+        T5[("🗃️ date_ideas")]
+        T6[("🗃️ date_ideas_feedback")]
+        T2 -->|belongs to| T1
+        T3 -->|links| T1
+        T4 -->|owned by| T2
+        T5 -->|owned by| T2
+        T6 -->|rates| T5
+    end
+
+    subgraph FUNCTIONS["⚡ Edge Functions (Deno)"]
+        EF1["⚡ generate-date-ideas\nOpenAI GPT-4o\nGenerates personalized date suggestions"]
+    end
+
+    subgraph CRONS["⏰ pg_cron Jobs"]
+        CRON1["⏰ Job #1\n0 6 * * * UTC\n→ calls generate-date-ideas\nEvery day at 6 AM UTC"]
+    end
+
+    DEV_AUTH --> SCHEMA
+    DEV_AUTH --> FUNCTIONS
+    DEV_AUTH --> CRONS
+    CRONS -->|"triggers"| EF1
+    EF1 -->|"writes to"| T5
+
+    classDef authNode fill:#3ECF8E,stroke:#1a7a52,stroke-width:2px,color:#0d3d27,font-weight:bold
+    classDef table fill:#1a3a2a,stroke:#3ECF8E,stroke-width:2px,color:#3ECF8E
+    classDef fn fill:#0d2d1f,stroke:#3ECF8E,stroke-width:3px,color:#3ECF8E,font-weight:bold
+    classDef cron fill:#112b1f,stroke:#2da86e,stroke-width:2px,color:#2da86e
+
+    class DEV_AUTH,PROD_AUTH authNode
+    class T1,T2,T3,T4,T5,T6 table
+    class EF1 fn
+    class CRON1 cron
+```
+
+---
+
+### Diagram 4 — AWS Infrastructure (Dev)
+
+Full AWS topology for the dev environment — DNS, CDN, storage, email, and certificates.
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#232F3E', 'primaryTextColor': '#FF9900', 'primaryBorderColor': '#FF9900', 'lineColor': '#FF9900', 'secondaryColor': '#1a2332', 'tertiaryColor': '#1d2b3a', 'background': '#232F3E', 'edgeLabelBackground': '#232F3E', 'clusterBkg': '#1a2332', 'clusterBorder': '#FF9900', 'fontFamily': 'ui-monospace, monospace', 'titleColor': '#FF9900'}}}%%
+graph TB
+    subgraph DNS["🌍 Route 53 — nextasy.co\n(Hosted Zone Z02633611RLKX976F44TP)"]
+        R53_APP["A alias\ncouplesapp.nextasy.co"]
+        R53_WEB["CNAME\n*.nextasy.co"]
+    end
+
+    subgraph ACM_GROUP["🔑 ACM Certificate"]
+        ACM["🔑 SSL/TLS\nnextasy.co + *.nextasy.co\nARN: REDACTED"]
+    end
+
+    subgraph CDN["🌐 CloudFront Distributions (Account AWS_ACCOUNT_ID_REDACTED)"]
+        CF_APP["🌐 CouplesApp CDN\nERLTLXEW7WTTN\ndlr56cmovhfn0.cloudfront.net"]
+        CF_WEB["🌐 Nextasy Web CDN\nE640UP3DK37WP\nd3heh2lnt32ajw.cloudfront.net"]
+        CF_REPORTS["🌐 Reports CDN\nEYJ1QFLZNTBP\nd1ej7mofi8sf.cloudfront.net"]
+    end
+
+    subgraph S3_GROUP["🪣 S3 Buckets (us-east-1)"]
+        S3_APP[("🪣 couplesapp-dev-frontend\nReact SPA")]
+        S3_WEB[("🪣 nextasy-co-website\nCorporate + branch previews")]
+        S3_E2E[("🪣 couplesapp-e2e-reports\nE2E & ClawBot reports")]
+        S3_TF[("🪣 nextasyapps-terraform-state-dev\nTerraform remote state")]
+    end
+
+    subgraph SES_GROUP["📧 SES — Email"]
+        SES["📧 AWS SES\ncouplesapp-noreply@nextasy.co\nnextasy.co verified domain"]
+    end
+
+    R53_APP --> CF_APP
+    R53_WEB --> CF_WEB
+    ACM --> CF_APP
     CF_APP --> S3_APP
     CF_WEB --> S3_WEB
     CF_REPORTS --> S3_E2E
 
-    %% ── Supabase ──────────────────────────────────────
-    subgraph SB["🟢 Supabase (Nextasy Org)"]
-        SB_DEV["couplesapp-dev\nklpshxvjzsdqolkrabvb\nsignup=ON · autoconfirm=ON"]
-        SB_PROD["couplesapp-prod\nzbzesuuovfpjdqggambg\nsignup=OFF · autoconfirm=OFF"]
+    classDef dns fill:#FF9900,stroke:#b36a00,stroke-width:2px,color:#232F3E,font-weight:bold
+    classDef acm fill:#d45b07,stroke:#232F3E,stroke-width:2px,color:#ffffff
+    classDef cf fill:#8B5CF6,stroke:#6D28D9,stroke-width:2px,color:#ffffff
+    classDef s3 fill:#3d6e37,stroke:#FF9900,stroke-width:2px,color:#ffffff
+    classDef ses fill:#FF4F00,stroke:#cc3f00,stroke-width:2px,color:#ffffff
 
-        subgraph SB_SCHEMA["Database Schema"]
-            T1["profiles"]
-            T2["couples"]
-            T3["invitations"]
-            T4["calendar_events"]
-            T5["date_ideas"]
-            T6["date_ideas_feedback"]
+    class R53_APP,R53_WEB dns
+    class ACM acm
+    class CF_APP,CF_WEB,CF_REPORTS cf
+    class S3_APP,S3_WEB,S3_E2E,S3_TF s3
+    class SES ses
+```
+
+---
+
+### Diagram 5 — AWS Infrastructure (Prod)
+
+Production environment — provisioned but apps not yet live. Same topology, minimal traffic.
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#2d2d2d', 'primaryTextColor': '#aaaaaa', 'primaryBorderColor': '#555555', 'lineColor': '#555555', 'secondaryColor': '#222222', 'tertiaryColor': '#282828', 'background': '#2d2d2d', 'edgeLabelBackground': '#2d2d2d', 'clusterBkg': '#222222', 'clusterBorder': '#444444', 'fontFamily': 'ui-monospace, monospace', 'titleColor': '#aaaaaa'}}}%%
+graph TB
+    subgraph PROD_ACCOUNT["☁️ AWS Account 511930354489 — Production"]
+        subgraph PROD_SB["🟡 Supabase (couplesapp-prod)"]
+            PROD_AUTH["zbzesuuovfpjdqggambg\nsignup=OFF · autoconfirm=OFF\n🔒 Strict security posture"]
         end
 
-        subgraph SB_FUNCTIONS["Edge Functions"]
-            EF1["generate-date-ideas\n(OpenAI GPT-4o)"]
+        subgraph PROD_INFRA["🏗️ Infrastructure (Pending)"]
+            PROD_CF["🌐 CloudFront\n(not yet provisioned)"]
+            PROD_S3[("🪣 S3 Buckets\n(not yet provisioned)")]
+            PROD_R53["🌍 Route53\n(not yet provisioned)"]
+            PROD_ACM["🔑 ACM Certificate\n(not yet provisioned)"]
         end
 
-        subgraph SB_CRON["pg_cron"]
-            CRON1["Job #1\n0 6 * * * UTC\n→ generate-date-ideas"]
-        end
-
-        SB_DEV --> SB_SCHEMA
-        SB_DEV --> SB_FUNCTIONS
-        SB_DEV --> SB_CRON
+        PROD_CF -.->|"will serve"| PROD_S3
+        PROD_R53 -.->|"will route to"| PROD_CF
+        PROD_ACM -.->|"will secure"| PROD_CF
     end
 
-    %% ── ACM ───────────────────────────────────────────
-    ACM["🔒 ACM Certificate\nnextasy.co + *.nextasy.co\nARN: REDACTED"]
-    ACM --> CF_APP
+    classDef pending fill:#3a3a3a,stroke:#555555,stroke-width:1px,color:#888888,font-style:italic
+    classDef prodReady fill:#2d4a2d,stroke:#556b55,stroke-width:2px,color:#99cc99
 
-    %% ── GitHub Actions ────────────────────────────────
-    subgraph GHA["⚙️ GitHub Actions"]
-        GHA_TF["terraform-dev.yml\nterraform plan + apply"]
-        GHA_SB["supabase-deploy.yml\ndb push + functions deploy"]
-        GHA_DIAG["update-diagram.yml\nAuto-update this README\non every infra change"]
-    end
-
-    GHA_TF -->|"manages"| CDN
-    GHA_TF -->|"manages"| S3
-    GHA_TF -->|"manages"| DNS
-    GHA_SB -->|"deploys"| SB_FUNCTIONS
-    GHA_SB -->|"runs migrations"| SB_SCHEMA
-    GHA_DIAG -->|"creates PR"| README["📄 README.md\n(this file)"]
-
-    %% ── Apps ──────────────────────────────────────────
-    subgraph APPS["📱 Applications"]
-        APP_WEB["CouplesApp Web\nhttps://couplesapp.nextasy.co"]
-        APP_IOS["CouplesApp iOS\n(Capacitor native)"]
-        APP_SITE["nextasy.co\nhttps://www.nextasy.co"]
-    end
-
-    APP_WEB --> CF_APP
-    APP_IOS --> SB_DEV
-    APP_SITE --> CF_WEB
-    APP_WEB --> SB_DEV
-
-    %% ── SES ───────────────────────────────────────────
-    SES["📧 AWS SES\ncouplesapp-noreply@nextasy.co\nnextasy.co verified domain"]
-    APP_WEB -->|"invitation emails"| SES
-
-    %% ── Styles ────────────────────────────────────────
-    classDef aws fill:#FF9900,stroke:#232F3E,color:#000
-    classDef supabase fill:#3ECF8E,stroke:#1a7a52,color:#000
-    classDef cdn fill:#8B5CF6,stroke:#6D28D9,color:#fff
-    classDef s3 fill:#569A31,stroke:#2d5c12,color:#fff
-    classDef app fill:#0EA5E9,stroke:#0369a1,color:#fff
-    classDef gha fill:#24292E,stroke:#444,color:#fff
-    classDef dns fill:#E84393,stroke:#9d1365,color:#fff
-
-    class R53,ACM,SES aws
-    class SB_DEV,SB_PROD,T1,T2,T3,T4,T5,T6,EF1,CRON1 supabase
-    class CF_APP,CF_WEB,CF_REPORTS cdn
-    class S3_APP,S3_WEB,S3_E2E s3
-    class APP_WEB,APP_IOS,APP_SITE app
-    class GHA_TF,GHA_SB,GHA_DIAG gha
+    class PROD_CF,PROD_S3,PROD_R53,PROD_ACM pending
+    class PROD_AUTH prodReady
 ```
 
 ---
@@ -175,6 +312,7 @@ nextasyapps-infra/
 ## Deployed Resources
 
 ### CloudFront Distributions
+
 | ID | Domain | Origin | Purpose |
 |----|--------|--------|---------|
 | `ERLTLXEW7WTTN` | `dlr56cmovhfn0.cloudfront.net` | `couplesapp-dev-frontend` | CouplesApp web |
@@ -182,6 +320,7 @@ nextasyapps-infra/
 | `EYJ1QFLZNTBP` | `d1ej7mofi8sf.cloudfront.net` | `couplesapp-e2e-reports` | E2E + reports |
 
 ### S3 Buckets
+
 | Bucket | Region | Purpose |
 |--------|--------|---------|
 | `couplesapp-dev-frontend` | us-east-1 | CouplesApp React SPA |
@@ -191,4 +330,4 @@ nextasyapps-infra/
 
 ---
 
-*Diagram last updated: 2026-03-05 — auto-maintained by [update-diagram.yml](.github/workflows/update-diagram.yml)*
+*Diagrams last updated: 2026-03-05 — auto-maintained by [update-diagram.yml](.github/workflows/update-diagram.yml)*
