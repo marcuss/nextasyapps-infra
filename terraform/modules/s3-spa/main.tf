@@ -112,8 +112,13 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
+  aliases = var.custom_domain != "" ? [var.custom_domain] : []
+
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = var.custom_domain == "" ? true : null
+    acm_certificate_arn            = var.custom_domain != "" ? var.acm_certificate_arn : null
+    ssl_support_method             = var.custom_domain != "" ? "sni-only" : null
+    minimum_protocol_version       = var.custom_domain != "" ? "TLSv1.2_2021" : null
   }
 
   tags = merge(var.tags, {
