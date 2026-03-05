@@ -15,9 +15,15 @@ variable "tags" {
 }
 
 variable "custom_domain" {
-  description = "Custom domain for CloudFront (e.g. couplesapp.nextasy.co). Leave empty to use default CloudFront domain."
+  description = "Primary custom domain for CloudFront (e.g. nextasy.co). Leave empty to use default CloudFront domain."
   type        = string
   default     = ""
+}
+
+variable "additional_domains" {
+  description = "Additional custom domains for CloudFront (e.g. ['www.nextasy.co']). Requires custom_domain to be set."
+  type        = list(string)
+  default     = []
 }
 
 variable "acm_certificate_arn" {
