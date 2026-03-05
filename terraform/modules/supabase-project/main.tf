@@ -2,7 +2,7 @@ terraform {
   required_providers {
     supabase = {
       source  = "supabase/supabase"
-      version = "~> 1.0"
+      version = "~> 1.4"
     }
   }
 }
@@ -12,4 +12,12 @@ resource "supabase_project" "this" {
   name              = var.project_name
   database_password = var.database_password
   region            = var.region
+}
+
+resource "supabase_settings" "auth" {
+  project_ref = supabase_project.this.id
+
+  auth = jsonencode({
+    disable_signup = var.disable_signup
+  })
 }

@@ -8,6 +8,7 @@ module "supabase_dev" {
   project_name      = "couplesapp-dev"
   database_password = var.supabase_dev_db_password
   region            = "us-east-1"
+  disable_signup    = false   # Allow new user registrations
 }
 
 module "supabase_prod" {
@@ -16,9 +17,9 @@ module "supabase_prod" {
   project_name      = "couplesapp-prod"
   database_password = var.supabase_prod_db_password
   region            = "us-east-1"
+  disable_signup    = true    # Prod: controlled signups only
 }
 
-# Outputs para uso en la app
 output "dev_project_ref" {
   value = module.supabase_dev.project_ref
 }
