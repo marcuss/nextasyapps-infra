@@ -26,6 +26,10 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: us-east-1
+      TF_VAR_supabase_access_token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      TF_VAR_supabase_org_id: ${{ secrets.TF_VAR_SUPABASE_ORG_ID }}
+      TF_VAR_supabase_dev_db_password: ${{ secrets.TF_VAR_SUPABASE_DEV_DB_PASSWORD }}
+      TF_VAR_supabase_prod_db_password: ${{ secrets.TF_VAR_SUPABASE_PROD_DB_PASSWORD }}
 
     steps:
       - name: Checkout
