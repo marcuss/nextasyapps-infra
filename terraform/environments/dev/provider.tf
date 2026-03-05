@@ -6,7 +6,7 @@ terraform {
     }
     supabase = {
       source  = "supabase/supabase"
-      version = "~> 1.0"
+      version = "~> 1.4"
     }
   }
 
@@ -18,6 +18,10 @@ terraform {
 }
 
 provider "aws" {
-  region  = "us-east-1"
-  profile = "dev"
+  region = "us-east-1"
+  # Profile only for local dev — in CI uses AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars
+  dynamic "assume_role" {
+    for_each = []
+    content {}
+  }
 }
