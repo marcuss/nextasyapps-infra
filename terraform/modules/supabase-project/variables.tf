@@ -25,3 +25,9 @@ variable "disable_signup" {
   type        = bool
   default     = false
 }
+
+variable "mailer_autoconfirm" {
+  description = "Skip email confirmation on signup (true for dev, false for prod)"
+  type        = bool
+  default     = false
+}
