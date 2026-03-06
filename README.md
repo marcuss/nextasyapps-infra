@@ -17,7 +17,6 @@ Five focused diagrams — each styled to its brand — give you a complete pictu
 High-level view of how all the moving parts relate to each other.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#f8f9fa', 'primaryTextColor': '#1a1a1a', 'primaryBorderColor': '#dee2e6', 'lineColor': '#6c757d', 'secondaryColor': '#ffffff', 'tertiaryColor': '#f0f0f0', 'background': '#ffffff', 'edgeLabelBackground': '#ffffff', 'fontFamily': 'ui-monospace, monospace'}}}%%
 graph TB
     subgraph APPS["📱 Applications"]
         APP_WEB["💗 CouplesApp Web\ncouplesapp.nextasy.co"]
@@ -62,7 +61,6 @@ graph TB
 Source code repositories, workflows, and the automation that keeps everything running.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#24292E', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#444d56', 'lineColor': '#586069', 'secondaryColor': '#1f2428', 'tertiaryColor': '#2f363d', 'background': '#24292E', 'edgeLabelBackground': '#24292E', 'clusterBkg': '#1f2428', 'clusterBorder': '#444d56', 'fontFamily': 'ui-monospace, monospace', 'titleColor': '#ffffff'}}}%%
 graph LR
     subgraph REPOS["🐙 GitHub Repositories"]
         R_INFRA["🏗️ nextasyapps-infra\nTerraform · Supabase · GHA"]
@@ -116,7 +114,6 @@ graph LR
 Database schema, Edge Functions, scheduled crons, and auth configuration for dev & prod.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1C1C1C', 'primaryTextColor': '#3ECF8E', 'primaryBorderColor': '#3ECF8E', 'lineColor': '#3ECF8E', 'secondaryColor': '#161616', 'tertiaryColor': '#1a1a1a', 'background': '#1C1C1C', 'edgeLabelBackground': '#1C1C1C', 'clusterBkg': '#161616', 'clusterBorder': '#2a2a2a', 'fontFamily': 'ui-monospace, monospace', 'titleColor': '#3ECF8E'}}}%%
 graph TB
     subgraph AUTH["🔐 Auth Configuration"]
         DEV_AUTH["couplesapp-dev\nklpshxvjzsdqolkrabvb\nsignup=ON · autoconfirm=ON"]
@@ -169,7 +166,6 @@ graph TB
 Full AWS topology for the dev environment — DNS, CDN, storage, email, and certificates.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#232F3E', 'primaryTextColor': '#FF9900', 'primaryBorderColor': '#FF9900', 'lineColor': '#FF9900', 'secondaryColor': '#1a2332', 'tertiaryColor': '#1d2b3a', 'background': '#232F3E', 'edgeLabelBackground': '#232F3E', 'clusterBkg': '#1a2332', 'clusterBorder': '#FF9900', 'fontFamily': 'ui-monospace, monospace', 'titleColor': '#FF9900'}}}%%
 graph TB
     subgraph DNS["🌍 Route 53 — nextasy.co\n(Hosted Zone Z02633611RLKX976F44TP)"]
         R53_APP["A alias\ncouplesapp.nextasy.co"]
@@ -221,26 +217,25 @@ graph TB
 
 ### Diagram 5 — AWS Infrastructure (Prod)
 
-Production environment — provisioned but apps not yet live. Same topology, minimal traffic.
+Production environment — live at couplesapp.nextasy.co (deployed 2026-03-05).
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#2d2d2d', 'primaryTextColor': '#aaaaaa', 'primaryBorderColor': '#555555', 'lineColor': '#555555', 'secondaryColor': '#222222', 'tertiaryColor': '#282828', 'background': '#2d2d2d', 'edgeLabelBackground': '#2d2d2d', 'clusterBkg': '#222222', 'clusterBorder': '#444444', 'fontFamily': 'ui-monospace, monospace', 'titleColor': '#aaaaaa'}}}%%
 graph TB
     subgraph PROD_ACCOUNT["☁️ AWS Account 511930354489 — Production"]
         subgraph PROD_SB["🟡 Supabase (couplesapp-prod)"]
             PROD_AUTH["zbzesuuovfpjdqggambg\nsignup=OFF · autoconfirm=OFF\n🔒 Strict security posture"]
         end
 
-        subgraph PROD_INFRA["🏗️ Infrastructure (Pending)"]
-            PROD_CF["🌐 CloudFront\n(not yet provisioned)"]
-            PROD_S3[("🪣 S3 Buckets\n(not yet provisioned)")]
-            PROD_R53["🌍 Route53\n(not yet provisioned)"]
-            PROD_ACM["🔑 ACM Certificate\n(not yet provisioned)"]
+        subgraph PROD_INFRA["🏗️ Infrastructure (Live ✅)"]
+            PROD_CF["🌐 CloudFront\n✅ Provisioned"]
+            PROD_S3[("🪣 S3 Buckets\n✅ Provisioned")]
+            PROD_R53["🌍 Route53\n✅ Provisioned"]
+            PROD_ACM["🔑 ACM Certificate\n✅ Provisioned"]
         end
 
-        PROD_CF -.->|"will serve"| PROD_S3
-        PROD_R53 -.->|"will route to"| PROD_CF
-        PROD_ACM -.->|"will secure"| PROD_CF
+        PROD_CF -.->|"serves"| PROD_S3
+        PROD_R53 -.->|"routes to"| PROD_CF
+        PROD_ACM -.->|"secures"| PROD_CF
     end
 
     classDef pending fill:#3a3a3a,stroke:#555555,stroke-width:1px,color:#888888,font-style:italic
