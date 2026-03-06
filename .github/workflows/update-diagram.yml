@@ -57,10 +57,10 @@ jobs:
 
           echo "context_file=/tmp/infra_context.txt" >> "$GITHUB_OUTPUT"
 
-      - name: Generate updated diagram with Claude
+      - name: Generate updated diagram with OpenAI
         id: generate
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           CONTEXT=$(cat /tmp/infra_context.txt)
           DATE=$(date +%Y-%m-%d)
@@ -68,31 +68,16 @@ jobs:
           # Read current README for reference
           CURRENT_README=$(cat README.md)
 
-          PROMPT="You are an infrastructure architect. Analyze the following Terraform configuration and generate an updated Mermaid diagram for the README.md.
+          PROMPT="You are an infrastructure architect. Analyze the following Terraform configuration and generate an updated Mermaid diagram for the README.md.\n\n## Current Terraform Infrastructure:\n$CONTEXT\n\n## Current README (for reference):\n$CURRENT_README\n\n## Instructions:\n1. Analyze all .tf files and extract: S3 buckets, CloudFront distributions, Route53 records, ACM certificates, Supabase projects, and any other AWS resources.\n2. Generate a Mermaid graph TB diagram that accurately represents the current infrastructure.\n3. Use these node styles: AWS resources=orange (#FF9900), Supabase=green (#3ECF8E), CloudFront=purple (#8B5CF6), S3=dark green (#569A31), Apps=blue (#0EA5E9), GitHub Actions=dark (#24292E).\n4. Keep the diagram clean and readable. Group related resources in subgraphs.\n5. Return ONLY the content between the \`\`\`mermaid and \`\`\` fences — nothing else.\n6. Today's date is $DATE."
 
-          ## Current Terraform Infrastructure:
-          $CONTEXT
-
-          ## Current README (for reference):
-          $CURRENT_README
-
-          ## Instructions:
-          1. Analyze all .tf files and extract: S3 buckets, CloudFront distributions, Route53 records, ACM certificates, Supabase projects, and any other AWS resources.
-          2. Generate a Mermaid graph TB diagram that accurately represents the current infrastructure.
-          3. Use these node styles: AWS resources=orange (#FF9900), Supabase=green (#3ECF8E), CloudFront=purple (#8B5CF6), S3=dark green (#569A31), Apps=blue (#0EA5E9), GitHub Actions=dark (#24292E).
-          4. Keep the diagram clean and readable. Group related resources in subgraphs.
-          5. Return ONLY the content between the \`\`\`mermaid and \`\`\` fences — nothing else.
-          6. Today's date is $DATE."
-
-          # Call Claude API
-          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
-            -H "x-api-key: $ANTHROPIC_API_KEY" \
-            -H "anthropic-version: 2023-06-01" \
-            -H "content-type: application/json" \
+          # Call OpenAI API
+          RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -H "Content-Type: application/json" \
             -d "$(jq -n \
               --arg prompt "$PROMPT" \
               '{
-                model: "claude-haiku-4-5",
+                model: "gpt-4o-mini",
                 max_tokens: 4096,
                 messages: [{"role": "user", "content": $prompt}]
               }'
@@ -102,7 +87,7 @@ jobs:
           DIAGRAM=$(echo "$RESPONSE" | python3 -c "
           import sys, json
           data = json.load(sys.stdin)
-          text = data['content'][0]['text']
+          text = data['choices'][0]['message']['content']
           print(text)
           ")
 
@@ -164,7 +149,7 @@ jobs:
             This PR was automatically created by the `update-diagram.yml` workflow after infrastructure changes were detected.
 
             ### What changed?
-            The Mermaid architecture diagram in `README.md` has been regenerated using Claude to reflect the latest Terraform configuration.
+            The Mermaid architecture diagram in `README.md` has been regenerated using OpenAI GPT-4o-mini to reflect the latest Terraform configuration.
 
             ### Changes detected in:
             ${{ github.event.head_commit.message }}
