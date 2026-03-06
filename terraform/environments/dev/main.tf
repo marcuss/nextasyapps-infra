@@ -4,7 +4,7 @@ module "couplesapp_frontend" {
   bucket_name         = "couplesapp-dev-frontend"
   environment         = "dev"
   custom_domain       = "couplesapp.nextasy.co"
-  acm_certificate_arn = "ARN_REDACTED_USE_TF_VAR"
+  acm_certificate_arn = var.acm_certificate_arn
 
   tags = {
     App  = "couplesapp"

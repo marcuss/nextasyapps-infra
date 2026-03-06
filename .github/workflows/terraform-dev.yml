@@ -30,6 +30,7 @@ jobs:
       TF_VAR_supabase_org_id: ${{ secrets.TF_VAR_SUPABASE_ORG_ID }}
       TF_VAR_supabase_dev_db_password: ${{ secrets.TF_VAR_SUPABASE_DEV_DB_PASSWORD }}
       TF_VAR_supabase_prod_db_password: ${{ secrets.TF_VAR_SUPABASE_PROD_DB_PASSWORD }}
+      TF_VAR_acm_certificate_arn: ${{ secrets.TF_VAR_ACM_CERTIFICATE_ARN }}
 
     steps:
       - name: Checkout

@@ -48,3 +48,8 @@ variable "supabase_prod_db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "acm_certificate_arn" {
+  description = "ARN of the ACM certificate for nextasy.co (*.nextasy.co + nextasy.co). Stored as TF_VAR_ACM_CERTIFICATE_ARN in GitHub Actions secrets."
+  type        = string
+}
