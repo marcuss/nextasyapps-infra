@@ -9,3 +9,12 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.*
+credentials.*
+terraform.tfvars
