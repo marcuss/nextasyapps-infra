@@ -49,8 +49,10 @@ DROP POLICY IF EXISTS "Users can read their couple assignments" ON public.daily_
 CREATE POLICY "Users can read their couple assignments" ON public.daily_question_assignments
   FOR SELECT USING (
     couple_id IN (
-      SELECT id FROM public.couples
-      WHERE partner1_id = auth.uid() OR partner2_id = auth.uid()
+      -- couple_id is the user's own id or their partner's id
+      SELECT auth.uid()
+      UNION
+      SELECT p.partner_id FROM public.profiles p WHERE p.id = auth.uid() AND p.partner_id IS NOT NULL
     )
   );
 

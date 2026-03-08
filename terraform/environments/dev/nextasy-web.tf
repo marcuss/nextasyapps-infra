@@ -8,7 +8,7 @@ module "nextasy_website" {
   # covers nextasy.co and *.nextasy.co
   custom_domain       = "nextasy.co"
   additional_domains  = ["www.nextasy.co"]
-  acm_certificate_arn = var.acm_certificate_arn
+  acm_certificate_arn = var.nextasy_acm_certificate_arn
 
   tags = {
     App  = "nextasy-web"
