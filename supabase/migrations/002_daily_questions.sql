@@ -1,76 +1,77 @@
--- Daily Questions Feature
--- Migration 005: daily_questions schema
+-- =============================================================================
+-- LoveCompass — Daily Questions
+-- Migration 002: Questions bank, assignments, answers + 714 seed questions
+-- =============================================================================
 
--- 1. Questions bank table
-CREATE TABLE IF NOT EXISTS public.questions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  category text NOT NULL CHECK (category IN (
-    'communication','intimacy','dreams','memories','values',
-    'fun','gratitude','conflict','finances','growth','family','adventure'
+-- Questions bank (714 questions in 7 languages, 12 categories, 3 difficulty levels)
+CREATE TABLE public.questions (
+  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  category    text        NOT NULL CHECK (category IN (
+    'communication', 'intimacy', 'dreams', 'memories', 'values',
+    'fun', 'gratitude', 'conflict', 'finances', 'growth', 'family', 'adventure'
   )),
-  difficulty int NOT NULL DEFAULT 1 CHECK (difficulty BETWEEN 1 AND 3),
-  translations jsonb NOT NULL DEFAULT '{}',
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now()
+  difficulty  int         NOT NULL DEFAULT 1 CHECK (difficulty BETWEEN 1 AND 3),
+  translations jsonb      NOT NULL DEFAULT '{}',
+  is_active   boolean     NOT NULL DEFAULT true,
+  created_at  timestamptz NOT NULL DEFAULT now()
 );
 
--- 2. Daily question assignments (one per couple per day)
-CREATE TABLE IF NOT EXISTS public.daily_question_assignments (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  couple_id uuid NOT NULL,
+-- Daily question assignments (one per couple per day)
+CREATE TABLE public.daily_question_assignments (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  couple_id   uuid NOT NULL,
   question_id uuid NOT NULL REFERENCES public.questions(id),
-  date date NOT NULL DEFAULT CURRENT_DATE,
-  created_at timestamptz NOT NULL DEFAULT now(),
+  date        date NOT NULL DEFAULT CURRENT_DATE,
+  created_at  timestamptz NOT NULL DEFAULT now(),
   UNIQUE(couple_id, date)
 );
 
--- 3. Daily answers (asymmetric reveal)
-CREATE TABLE IF NOT EXISTS public.daily_answers (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  couple_id uuid NOT NULL,
+-- Daily answers (asymmetric reveal: can't see partner's answer until you answer)
+CREATE TABLE public.daily_answers (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  couple_id   uuid NOT NULL,
   question_id uuid NOT NULL REFERENCES public.questions(id),
-  user_id uuid NOT NULL REFERENCES public.profiles(id),
-  answer text NOT NULL,
-  date date NOT NULL DEFAULT CURRENT_DATE,
+  user_id     uuid NOT NULL REFERENCES public.profiles(id),
+  answer      text NOT NULL,
+  date        date NOT NULL DEFAULT CURRENT_DATE,
   answered_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE(couple_id, user_id, date)
 );
 
--- RLS policies
+-- RLS
 ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_question_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_answers ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Anyone can read active questions" ON public.questions;
+-- Questions: any authenticated user can read active questions
 CREATE POLICY "Anyone can read active questions" ON public.questions
   FOR SELECT USING (is_active = true);
 
-DROP POLICY IF EXISTS "Users can read their couple assignments" ON public.daily_question_assignments;
+-- Assignments: user can read if couple_id is their id or partner's id
 CREATE POLICY "Users can read their couple assignments" ON public.daily_question_assignments
   FOR SELECT USING (
     couple_id IN (
-      -- couple_id is the user's own id or their partner's id
       SELECT auth.uid()
       UNION
-      SELECT p.partner_id FROM public.profiles p WHERE p.id = auth.uid() AND p.partner_id IS NOT NULL
+      SELECT public.get_partner_id(auth.uid())
     )
   );
 
-DROP POLICY IF EXISTS "Users can read own answer always" ON public.daily_answers;
-CREATE POLICY "Users can read own answer always" ON public.daily_answers
+CREATE POLICY "Users can insert couple assignments" ON public.daily_question_assignments
+  FOR INSERT WITH CHECK (
+    couple_id IN (
+      SELECT auth.uid()
+      UNION
+      SELECT public.get_partner_id(auth.uid())
+    )
+  );
+
+-- Answers: always read own, read partner's only after you've answered
+CREATE POLICY "Users can read own answers" ON public.daily_answers
   FOR SELECT USING (user_id = auth.uid());
 
-DROP POLICY IF EXISTS "Users can insert own answer" ON public.daily_answers;
-CREATE POLICY "Users can insert own answer" ON public.daily_answers
-  FOR INSERT WITH CHECK (user_id = auth.uid());
-
-DROP POLICY IF EXISTS "Users can read partner answer after both answered" ON public.daily_answers;
-CREATE POLICY "Users can read partner answer after both answered" ON public.daily_answers
+CREATE POLICY "Users can read partner answers after both answered" ON public.daily_answers
   FOR SELECT USING (
-    -- User can always read their own answer
-    user_id = auth.uid()
-    OR
-    -- User can read partner's answer only after they themselves have answered today
     EXISTS (
       SELECT 1 FROM public.daily_answers da2
       WHERE da2.couple_id = daily_answers.couple_id
@@ -79,61 +80,13 @@ CREATE POLICY "Users can read partner answer after both answered" ON public.dail
     )
   );
 
--- Function: assign or get today's question for a couple
-CREATE OR REPLACE FUNCTION public.get_daily_question(p_couple_id uuid)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_assignment daily_question_assignments%ROWTYPE;
-  v_question questions%ROWTYPE;
-  v_result jsonb;
-BEGIN
-  -- Get or create today's assignment
-  SELECT * INTO v_assignment
-  FROM daily_question_assignments
-  WHERE couple_id = p_couple_id AND date = CURRENT_DATE;
+CREATE POLICY "Users can insert own answers" ON public.daily_answers
+  FOR INSERT WITH CHECK (user_id = auth.uid());
 
-  IF NOT FOUND THEN
-    -- Pick a random question not used by this couple in last 90 days
-    SELECT q.* INTO v_question
-    FROM questions q
-    WHERE q.is_active = true
-      AND q.id NOT IN (
-        SELECT question_id FROM daily_question_assignments
-        WHERE couple_id = p_couple_id
-          AND date > CURRENT_DATE - INTERVAL '90 days'
-      )
-    ORDER BY random()
-    LIMIT 1;
+-- =============================================================================
+-- SEED DATA: 714 questions in 7 languages
+-- =============================================================================
 
-    IF NOT FOUND THEN
-      -- Fallback: pick any random question
-      SELECT * INTO v_question FROM questions WHERE is_active = true ORDER BY random() LIMIT 1;
-    END IF;
-
-    INSERT INTO daily_question_assignments(couple_id, question_id, date)
-    VALUES (p_couple_id, v_question.id, CURRENT_DATE)
-    RETURNING * INTO v_assignment;
-  ELSE
-    SELECT * INTO v_question FROM questions WHERE id = v_assignment.question_id;
-  END IF;
-
-  v_result := jsonb_build_object(
-    'question_id', v_question.id,
-    'category', v_question.category,
-    'difficulty', v_question.difficulty,
-    'translations', v_question.translations,
-    'date', CURRENT_DATE
-  );
-
-  RETURN v_result;
-END;
-$$;
-
--- Questions data: 714 questions in 7 languages
--- Categories: communication, intimacy, dreams, memories, values, fun, gratitude, conflict, finances, growth, family, adventure
 INSERT INTO public.questions (category, difficulty, translations) VALUES
   ('communication', 1, '{"en": "What''s one thing you appreciate about how we handle daily communication?", "es": "¿Qué es algo que aprecias de cómo manejamos la comunicación diaria?", "fr": "Qu''est-ce que tu apprécies dans notre manière de gérer la communication quotidienne ?", "it": "Qual è una cosa che apprezzi di come gestiamo la comunicazione quotidiana?", "ko": "우리가 일상적인 소통을 어떻게 처리하는지에 대해 감사하게 생각하는 한 가지는 무엇인가요?", "nl": "Wat is één ding dat je waardeert aan hoe we onze dagelijkse communicatie afhandelen?", "zh": "在我们处理日常沟通的方式上，你欣赏什么？"}'),
   ('communication', 2, '{"en": "How do you feel we can improve our non-verbal communication?", "es": "¿Cómo crees que podemos mejorar nuestra comunicación no verbal?", "fr": "Comment penses-tu que nous pourrions améliorer notre communication non verbale ?", "it": "Come pensi che possiamo migliorare la nostra comunicazione non verbale?", "ko": "비언어적 의사소통을 어떻게 개선할 수 있을까요?", "nl": "Hoe denk je dat we onze non-verbale communicatie kunnen verbeteren?", "zh": "你认为我们可以如何改善我们的非语言沟通？"}'),
