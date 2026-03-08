@@ -55,3 +55,13 @@ import {
   to = module.nextasy_website.aws_cloudfront_distribution.this
   id = "E640UP3DK37WP"
 }
+
+import {
+  to = aws_cloudfront_distribution.e2e_reports
+  id = "EYJ1QFLZNTBP"
+}
+
+import {
+  to = aws_acm_certificate.couplesapp_nextasy
+  id = "arn:aws:acm:us-east-1:092042970121:certificate/b2571d4a-52b4-4986-a8b5-aa8fc68a5e8f"
+}

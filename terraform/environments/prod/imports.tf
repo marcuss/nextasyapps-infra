@@ -39,3 +39,13 @@ import {
   to = aws_route53_record.lovecompass_acm_validation
   id = "Z0581410V8FQJTMVTXVI__3861ee920a7163a02bf3e5896c441e16.lovecompass.co_CNAME"
 }
+
+import {
+  to = aws_s3_bucket.lovecompass_prod_frontend
+  id = "lovecompass-prod-frontend"
+}
+
+import {
+  to = aws_s3_bucket_website_configuration.lovecompass_prod_frontend
+  id = "lovecompass-prod-frontend"
+}

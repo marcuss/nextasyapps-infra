@@ -145,3 +145,52 @@ resource "aws_route53_record" "lovecompass_acm_validation" {
     "_94c47caf3b7f7eeab786d85e210bdcca.jkddzztszm.acm-validations.aws.",
   ]
 }
+
+# --- S3 Bucket (prod frontend) -----------------------------------------------
+
+resource "aws_s3_bucket" "lovecompass_prod_frontend" {
+  bucket = "lovecompass-prod-frontend"
+
+  tags = {
+    App = "lovecompass"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "lovecompass_prod_frontend" {
+  bucket = aws_s3_bucket.lovecompass_prod_frontend.id
+
+  block_public_acls       = false
+  ignore_public_acls      = false
+  block_public_policy     = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_website_configuration" "lovecompass_prod_frontend" {
+  bucket = aws_s3_bucket.lovecompass_prod_frontend.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
+  }
+}
+
+resource "aws_s3_bucket_policy" "lovecompass_prod_frontend" {
+  bucket     = aws_s3_bucket.lovecompass_prod_frontend.id
+  depends_on = [aws_s3_bucket_public_access_block.lovecompass_prod_frontend]
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicRead"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.lovecompass_prod_frontend.arn}/*"
+      }
+    ]
+  })
+}

@@ -28,3 +28,18 @@ resource "aws_route53_record" "couplesapp" {
     evaluate_target_health = false
   }
 }
+
+# ACM certificate for couplesapp.nextasy.co (used by dev CloudFront)
+resource "aws_acm_certificate" "couplesapp_nextasy" {
+  domain_name       = "couplesapp.nextasy.co"
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    App  = "couplesapp"
+    Team = "nextasy"
+  }
+}
