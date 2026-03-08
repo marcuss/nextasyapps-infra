@@ -10,23 +10,6 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- =============================================================================
--- HELPER FUNCTION: get_partner_id
--- =============================================================================
--- SECURITY DEFINER bypasses RLS to avoid infinite recursion when policies
--- on profiles need to look up partner_id from the same table.
--- =============================================================================
-
-CREATE OR REPLACE FUNCTION public.get_partner_id(p_user_id uuid)
-RETURNS uuid
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-  SELECT partner_id FROM profiles WHERE id = p_user_id;
-$$;
-
--- =============================================================================
 -- PROFILES
 -- =============================================================================
 
@@ -51,6 +34,18 @@ CREATE TABLE public.profiles (
 );
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Helper function: must be defined AFTER profiles table exists.
+-- SECURITY DEFINER bypasses RLS to avoid infinite recursion.
+CREATE OR REPLACE FUNCTION public.get_partner_id(user_id uuid)
+RETURNS uuid
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT partner_id FROM profiles WHERE id = user_id;
+$$;
 
 CREATE POLICY "Users can insert own profile" ON public.profiles
   FOR INSERT WITH CHECK (auth.uid() = id);
