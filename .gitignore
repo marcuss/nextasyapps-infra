@@ -18,3 +18,4 @@ override.tf.json
 secrets.*
 credentials.*
 terraform.tfvars
+supabase/.temp/

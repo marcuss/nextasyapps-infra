@@ -18,7 +18,7 @@ resource "supabase_settings" "auth" {
   project_ref = supabase_project.this.id
 
   auth = jsonencode({
-    disable_signup = var.disable_signup
+    disable_signup     = var.disable_signup
     mailer_autoconfirm = var.mailer_autoconfirm
   })
 }

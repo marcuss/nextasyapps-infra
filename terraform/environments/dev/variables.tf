@@ -24,8 +24,8 @@ variable "supabase_access_token" {
     Es un token personal de cuenta que permite crear/gestionar proyectos.
     Guardarlo como secret en GitHub Actions: SUPABASE_ACCESS_TOKEN
   EOT
-  type      = string
-  sensitive = true
+  type        = string
+  sensitive   = true
 }
 
 variable "supabase_org_id" {
@@ -34,7 +34,7 @@ variable "supabase_org_id" {
     Obtener en: https://supabase.com/dashboard/org
     Es el slug de la URL (ej: "abcdefghijklmnop")
   EOT
-  type = string
+  type        = string
 }
 
 variable "supabase_dev_db_password" {
@@ -50,6 +50,12 @@ variable "supabase_prod_db_password" {
 }
 
 variable "acm_certificate_arn" {
-  description = "ARN of the ACM certificate for nextasy.co (*.nextasy.co + nextasy.co). Stored as TF_VAR_ACM_CERTIFICATE_ARN in GitHub Actions secrets."
+  description = "ARN of the ACM certificate for couplesapp.nextasy.co. Stored as TF_VAR_ACM_CERTIFICATE_ARN in GitHub Actions secrets."
   type        = string
+}
+
+variable "nextasy_acm_certificate_arn" {
+  description = "ARN of the ACM certificate for nextasy.co (*.nextasy.co + nextasy.co)"
+  type        = string
+  default     = "arn:aws:acm:us-east-1:092042970121:certificate/c5e8a312-39dd-4478-b592-d124ff61a38b"
 }

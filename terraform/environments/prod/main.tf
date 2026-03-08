@@ -25,6 +25,52 @@ resource "aws_route53_zone" "lovecompass_co" {
 # Already issued: lovecompass.co + *.lovecompass.co
 # Managed outside Terraform (requested via CLI), referenced by ARN.
 
+# --- S3 Bucket ---------------------------------------------------------------
+
+resource "aws_s3_bucket" "lovecompass_frontend" {
+  bucket = "lovecompass-prod-frontend"
+
+  tags = {
+    App = "lovecompass"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "lovecompass_frontend" {
+  bucket                  = aws_s3_bucket.lovecompass_frontend.id
+  block_public_acls       = false
+  ignore_public_acls      = false
+  block_public_policy     = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_website_configuration" "lovecompass_frontend" {
+  bucket = aws_s3_bucket.lovecompass_frontend.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
+  }
+}
+
+resource "aws_s3_bucket_policy" "lovecompass_frontend" {
+  bucket     = aws_s3_bucket.lovecompass_frontend.id
+  depends_on = [aws_s3_bucket_public_access_block.lovecompass_frontend]
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "PublicRead"
+      Effect    = "Allow"
+      Principal = "*"
+      Action    = "s3:GetObject"
+      Resource  = "${aws_s3_bucket.lovecompass_frontend.arn}/*"
+    }]
+  })
+}
+
 # --- CloudFront Distribution -------------------------------------------------
 
 resource "aws_cloudfront_distribution" "lovecompass_prod" {
