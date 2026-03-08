@@ -9,11 +9,13 @@ Infrastructure as Code for **Nextasy** — managed with Terraform, Supabase CLI,
 ## 🗺️ Architecture Overview
 
 ```mermaid
+```mermaid
 graph TB
     subgraph APPS["📱 Applications"]
-        APP_WEB["💗 LoveCompass Web\ncouplesapp.nextasy.co (dev)\nlovecompass.co (prod)"]
-        APP_IOS["📱 LoveCompass iOS\nCapacitor native"]
-        APP_SITE["🌐 nextasy.co\nCorporate site"]
+        APP_WEB["💗 CouplesApp Web
+couplesapp.nextasy.co (dev)"]
+        APP_SITE["🌐 Nextasy Corporate Site
+nextasy.co"]
     end
 
     subgraph GH["🐙 GitHub Actions"]
@@ -24,45 +26,58 @@ graph TB
     end
 
     subgraph AWS_DEV["☁️ AWS DEV (092042970121)"]
-        CF_DEV["CloudFront\nERLTLXEW7WTTN · E640UP3DK37WP · EYJ1QFLZNTBP"]
-        S3_DEV["S3\ncouplesapp-dev-frontend\nnextasy-co-website\ncouplesapp-e2e-reports"]
-        R53_DEV["Route53\nnextasy.co"]
-    end
-
-    subgraph AWS_PROD["☁️ AWS PROD (511930354489)"]
-        CF_PROD["CloudFront\nE46OWDOILJWFC"]
-        S3_PROD["S3\nlovecompass-prod-frontend"]
-        R53_PROD["Route53\nlovecompass.co"]
+        CF_DEV["CloudFront
+ERLTLXEW7WTTN"]
+        S3_DEV["S3 Buckets
+couplesapp-dev-frontend
+nextasy-co-website
+couplesapp-e2e-reports"]
+        R53_DEV["Route53
+nextasy.co"]
     end
 
     subgraph SB["🟢 Supabase"]
-        SB_DEV["couplesapp-dev\nklpshxvjzsdqolkrabvb"]
-        SB_PROD["couplesapp-prod\nzbzesuuovfpjdqggambg"]
+        SB_DEV["CouplesApp Dev
+Project ID: klpshxvjzsdqolkrabvb"]
+        SB_PROD["CouplesApp Prod
+Project ID: zbzesuuovfpjdqggambg"]
+    end
+
+    subgraph AWS_PROD["☁️ AWS PROD (511930354489)"]
+        CF_PROD["CloudFront
+E46OWDOILJWFC"]
+        S3_PROD["S3
+lovecompass-prod-frontend"]
+        R53_PROD["Route53
+lovecompass.co"]
     end
 
     WF_TF_DEV -->|"plan + apply"| AWS_DEV
     WF_TF_PROD -->|"plan + apply"| AWS_PROD
     WF_SB -->|"db push + fn deploy"| SB
     APP_WEB --> CF_DEV
-    APP_WEB --> CF_PROD
     APP_WEB --> SB
     APP_SITE --> CF_DEV
     CF_DEV --> S3_DEV
-    CF_PROD --> S3_PROD
     R53_DEV --> CF_DEV
+    CF_PROD --> S3_PROD
     R53_PROD --> CF_PROD
 
-    classDef app fill:#f43f5e,stroke:#be123c,stroke-width:2px,color:#ffffff
+    classDef app fill:#0EA5E9,stroke:#0EA5E9,stroke-width:2px,color:#ffffff
     classDef github fill:#24292E,stroke:#0366D6,stroke-width:2px,color:#ffffff
     classDef awsDev fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:#232F3E,font-weight:bold
-    classDef awsProd fill:#d45b07,stroke:#232F3E,stroke-width:2px,color:#ffffff
+    classDef awsProd fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:#ffffff
     classDef supabase fill:#3ECF8E,stroke:#1a7a52,stroke-width:2px,color:#0d3d27,font-weight:bold
+    classDef cloudfront fill:#8B5CF6,stroke:#8B5CF6,stroke-width:2px,color:#ffffff
+    classDef s3 fill:#569A31,stroke:#569A31,stroke-width:2px,color:#ffffff
 
-    class APP_WEB,APP_IOS,APP_SITE app
+    class APP_WEB,APP_SITE app
     class WF_TF_DEV,WF_TF_PROD,WF_SB,WF_DIAG github
-    class CF_DEV,S3_DEV,R53_DEV awsDev
-    class CF_PROD,S3_PROD,R53_PROD awsProd
+    class CF_DEV,CF_PROD cloudfront
+    class S3_DEV,S3_PROD s3
+    class R53_DEV,R53_PROD awsDev
     class SB_DEV,SB_PROD supabase
+```
 ```
 
 ---
