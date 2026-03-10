@@ -25,8 +25,7 @@ resource "aws_route53_record" "nextasy_email_mx" {
   ]
 }
 
-# SPF record: Authorize ImprovMX to send emails for nextasy.co
-# This prevents emails forwarded by ImprovMX from being marked as spam
+# SPF record: Authorize ImprovMX + AWS SES to send emails for nextasy.co
 resource "aws_route53_record" "nextasy_email_spf" {
   zone_id = data.aws_route53_zone.nextasy_co.zone_id
   name    = "nextasy.co"
@@ -34,6 +33,6 @@ resource "aws_route53_record" "nextasy_email_spf" {
   ttl     = 300
 
   records = [
-    "v=spf1 include:spf.improvmx.com ~all",
+    "v=spf1 include:spf.improvmx.com include:amazonses.com ~all",
   ]
 }
