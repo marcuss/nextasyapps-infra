@@ -1,3 +1,20 @@
+-- Ensure couples table exists (referenced by RLS policies below)
+CREATE TABLE IF NOT EXISTS public.couples (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  partner1_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  partner2_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(partner1_id, partner2_id)
+);
+
+ALTER TABLE public.couples ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Partners can read their couple" ON public.couples;
+CREATE POLICY "Partners can read their couple" ON public.couples
+  FOR SELECT USING (partner1_id = auth.uid() OR partner2_id = auth.uid());
+
+-- Daily Questions Feature
+
 -- =============================================================================
 -- LoveCompass — Daily Questions
 -- Migration 002: Questions bank, assignments, answers + 714 seed questions
